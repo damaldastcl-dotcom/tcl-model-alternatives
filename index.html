@@ -312,13 +312,16 @@
       }
 
       /* Clickable alternatives + the side-by-side comparison.
-         The comparison lives in the right panel, directly below the
-         alternative it belongs to. Like the example picture, it is a
-         three-column table: Feature on the left, the customer's model
-         in the middle column, and the selected alternative in the
-         right column, side by side. All ten detailed feature rows
-         are always shown, in the picture's order, even when the two
-         models match on a row. */
+         The comparison lives at the very top of the results panel,
+         first on the list, before the pick list, step-ups, size-up,
+         and Holiday sections. It shows the first pick by default,
+         and tapping another alternative updates that same top
+         comparison. Like the example picture, it is a three-column
+         table: Feature on the left, the customer's model in the
+         middle column, and the selected alternative in the right
+         column, side by side. Only the detailed feature rows where
+         the two models actually differ are shown, in the picture's
+         order; rows where both values match are filtered out. */
       .can-compare { cursor: pointer; }
       .pick.compare-selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
       .alt-pick.compare-selected .pick-code { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
@@ -1575,13 +1578,15 @@
       }
 
       /* ---------------- Side-by-side comparison ----------------
-         For the selected alternative, rendered directly below that
-         alternative in the vertical list in the right panel: a
-         three-column table matching the example picture, with
-         Feature on the left, the customer's model in the middle
-         column, and the selected alternative in the right column,
-         side by side. All ten detailed rows are always shown, in
-         the picture's order, even when both models match on a row.
+         For the selected alternative, rendered at the very top of
+         the results panel, first on the list, before the pick list,
+         step-ups, size-up, and Holiday sections: a three-column
+         table matching the example picture, with Feature on the
+         left, the customer's model in the middle column, and the
+         selected alternative in the right column, side by side.
+         Only the detailed rows where the two models actually
+         differ are shown, in the picture's order; rows where both
+         values are identical are filtered out.
          Values come from the detailed specs: the labelled Key specs
          are split into their parts, and where this model's own
          entry is blank the same series / generation in the library
@@ -1808,10 +1813,18 @@
       }
       function compareHtml(orig, alt, why) {
         var of = detailedFacts(orig), af = detailedFacts(alt), rows = "";
+        var diffCount = 0;
         for (var i = 0; i < DETAIL_ROWS.length; i++) {
+          if (of[i][1] === af[i][1]) continue;
+          diffCount++;
           rows += '<tr><th scope="row">' + esc(DETAIL_ROWS[i]) + '</th>' +
             '<td>' + esc(of[i][1]) + '</td>' +
             '<td class="alt-cell">' + esc(af[i][1]) + '</td></tr>';
+        }
+        if (!diffCount) {
+          return '<div class="compare-wrap" id="compareSection"><h3>Side-by-side comparison</h3>' +
+            (why ? '<p class="sub">' + esc(orig.code) + ' vs ' + esc(alt.code) + '. ' + why + '</p>' : '') +
+            '<p class="diff-none">No differing features were found between ' + esc(orig.code) + ' and ' + esc(alt.code) + '.</p></div>';
         }
         var body = '<table class="compare-table"><colgroup><col class="col-feature"><col class="col-model"><col class="col-model"></colgroup>' +
           '<thead><tr><th scope="col">Feature</th>' +
@@ -1870,16 +1883,15 @@
           compareWhy = compareCandidates[0].why;
           compareCode = compareAlt.code;
         }
-        /* The comparison is inserted directly below the alternative
-           it belongs to in the vertical list, not appended at the
-           bottom. This flag tracks whether that inline insertion
-           happened; the fallback at the end only fires for a
-           comparison (e.g. a Holiday alternative) that has no
-           inline slot above. */
-        var compareInserted = false;
-
+        /* The comparison sits at the very top of the results panel,
+           first on the list, before the pick list, step-ups, size-up,
+           and Holiday sections. It shows the first pick by default,
+           and tapping another alternative updates this same top
+           comparison. */
         html += '<div class="orig"><span class="code mono">' + m.code + '</span>' +
           '<span class="meta">' + metaLine(m) + '</span></div>' + estimateHtml(m) + flagHtml(m) + packHtml(m);
+
+        if (compareAlt) html += compareHtml(m, compareAlt, compareWhy);
 
         var excludedCount = Object.keys(EXCLUDED).length;
         if (excludedCount) {
@@ -1893,10 +1905,6 @@
         var H = buildHolidayInfo(m, L);
         if (H) {
           html += H.html;
-          if (compareAlt && H.html.indexOf('data-compare="' + compareAlt.code + '"') !== -1) {
-            html += compareHtml(m, compareAlt, compareWhy);
-            compareInserted = true;
-          }
         }
 
         if (!L.picks.length) {
@@ -1917,11 +1925,10 @@
                 '<div class="pick-top"><span class="pick-code mono">' + p.model.code + '</span>' +
                 '<span class="tag ' + p.tagClass + '">' + p.tag + '</span>' +
                 '<span class="pick-year">' + (p.model.gen.year ? p.model.gen.year + ' model year' : 'Bulk pack') + '</span>' +
-                '<span class="compare-state">' + (isCmp ? "Comparing below" : "Tap to compare") + '</span></div>' +
+                '<span class="compare-state">' + (isCmp ? "Comparing at top" : "Tap to compare") + '</span></div>' +
                 '<div class="pick-meta">' + metaLine(p.model) + '</div>' +
-                '<div class="pick-why">' + p.why + '</div>' + flag + estimateHtml(p.model) + flagHtml(p.model) + (isCmp ? "" : packHtml(p.model)) +
+                '<div class="pick-why">' + p.why + '</div>' + flag + estimateHtml(p.model) + flagHtml(p.model) + packHtml(p.model) +
               '</div></div>';
-            if (isCmp) { html += compareHtml(m, compareAlt, compareWhy); compareInserted = true; }
           });
         }
 
@@ -1935,7 +1942,7 @@
             html += '<div class="alt-pick can-compare' + (uCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(u.model.code) + ' with customer&rsquo;s model" data-compare="' + esc(u.model.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + u.model.code + '</span>' +
               '<span class="step-badge s' + u.step + '">' + stepName(u.step) + '</span>' +
               (u.estimated ? ' <span class="est-badge">Estimated</span>' : '') +
-              '<span class="compare-state">' + (uCmp ? "Comparing below" : "Tap to compare") + '</span>' +
+              '<span class="compare-state">' + (uCmp ? "Comparing at top" : "Tap to compare") + '</span>' +
               '<span class="pick-meta">' + metaLine(u.model) + ' &middot; ' + u.why + '</span></div>';
             if (u.step === 3) {
               html += '<div class="approval-flash" role="alert">Approval needed before offering: this is a 3-level upgrade from the customer&rsquo;s model.</div>';
@@ -1949,8 +1956,7 @@
               html += '<div class="est-flag"><strong>Estimated step-up \u2014 validate:</strong> this is an estimated step-up, not a confirmed upgrade: ' + estWhy.join('; ') + '. Validate the estimated tier against the model&rsquo;s spec sheet or a retailer listing before offering this TV.</div>';
             }
             if (u.candEstimated) html += estimateHtml(u.model);
-            html += flagHtml(u.model) + (compareAlt && u.model.code === compareAlt.code ? "" : packHtml(u.model));
-            if (uCmp) { html += compareHtml(m, compareAlt, compareWhy); compareInserted = true; }
+            html += flagHtml(u.model) + packHtml(u.model);
           });
           html += '</div>';
         }
@@ -1968,12 +1974,10 @@
             'One size step up <span class="sep-badge">Separate option</span></h3>' +
             '<p class="sub">Not part of the main pick order above. Offer this only if no main pick is available, get the customer&rsquo;s agreement first, and note the agreement in the case.</p>' +
             '<div class="alt-pick can-compare' + (sizeCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(L.sizeUp.code) + ' with customer&rsquo;s model" data-compare="' + esc(L.sizeUp.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + L.sizeUp.code + '</span>' +
-            '<span class="compare-state">' + (sizeCmp ? "Comparing below" : "Tap to compare") + '</span>' +
+            '<span class="compare-state">' + (sizeCmp ? "Comparing at top" : "Tap to compare") + '</span>' +
             '<span class="pick-meta">' + metaLine(L.sizeUp) + ' &middot; ' + L.sizeUpWhy + '</span></div>' +
-            estimateHtml(L.sizeUp) + flagHtml(L.sizeUp) + (sizeCmp ? "" : packHtml(L.sizeUp)) +
-            (sizeCmp ? compareHtml(m, compareAlt, compareWhy) : '') +
+            estimateHtml(L.sizeUp) + flagHtml(L.sizeUp) + packHtml(L.sizeUp) +
             '</div>';
-          if (sizeCmp) compareInserted = true;
         }
 
         if (L.downgrade && L.downgrade.code !== m.code) {
@@ -1983,14 +1987,10 @@
             'Only if nothing above is available</h3>' +
             '<p class="sub">This steps down from what the customer paid for. Get the customer&rsquo;s agreement first and note the agreement in the case.</p>' +
             '<div class="alt-pick can-compare' + (downCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(L.downgrade.code) + ' with customer&rsquo;s model" data-compare="' + esc(L.downgrade.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + L.downgrade.code + '</span>' +
-            '<span class="compare-state">' + (downCmp ? "Comparing below" : "Tap to compare") + '</span>' +
+            '<span class="compare-state">' + (downCmp ? "Comparing at top" : "Tap to compare") + '</span>' +
             '<span class="pick-meta">' + metaLine(L.downgrade) + ' &middot; one step down from the ' + m.fam.label + '</span></div>' +
-            (downCmp ? compareHtml(m, compareAlt, compareWhy) : '') +
             '</div>';
-          if (downCmp) compareInserted = true;
         }
-
-        if (compareAlt && !compareInserted) html += compareHtml(m, compareAlt, compareWhy);
 
         html += '<div class="actions">' +
           '<button type="button" class="btn primary" id="copyBtn">' +

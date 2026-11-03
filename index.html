@@ -312,22 +312,27 @@
       }
 
       /* Clickable alternatives + the side-by-side comparison.
-         The comparison lives at the very top of the results panel,
-         first on the list, before the pick list, step-ups, size-up,
-         and Holiday sections. It shows the first pick by default,
-         and tapping another alternative updates that same top
-         comparison. Like the example picture, it is a three-column
-         table: Feature on the left, the customer's model in the
-         middle column, and the selected alternative in the right
-         column, side by side. Only the detailed feature rows where
-         the two models actually differ are shown, in the picture's
-         order; rows where both values match are filtered out. */
+         The comparison lives at the absolute top of the results
+         panel, first on the list, directly under the panel heading
+         and above the customer-model summary, the estimated-spec
+         notice, the bulk pack data, the pick list, step-ups,
+         size-up, and Holiday sections. It shows the first pick by
+         default, and tapping another alternative updates that same
+         top comparison. Like the example picture, it is a
+         three-column table: Feature on the left, the customer's
+         model in the middle column, and the selected alternative
+         in the right column, side by side. Only the detailed
+         feature rows where the two models actually differ are
+         shown, in the picture's order; rows where both values
+         match are filtered out, and the "(estimated)" marker is
+         ignored when comparing, so a row that differs only by
+         that marker is filtered out too. */
       .can-compare { cursor: pointer; }
       .pick.compare-selected { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
       .alt-pick.compare-selected .pick-code { color: var(--accent-ink); text-decoration: underline; text-underline-offset: 3px; }
       .compare-state { font-size: 11.5px; font-weight: 700; letter-spacing: 0.03em; text-transform: uppercase; color: var(--ink-3); white-space: nowrap; }
       .compare-selected .compare-state { color: var(--accent-ink); }
-      .compare-wrap { margin: 12px 0 14px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; padding: 18px 20px 14px; }
+      .compare-wrap { margin: 0 0 14px; border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px; padding: 18px 20px 14px; }
       .compare-wrap h3 { margin: 0 0 12px; font-size: 19px; font-weight: 700; color: var(--ink); letter-spacing: -0.01em; }
       .compare-wrap .sub { margin: 0 0 10px; font-size: 13.5px; color: var(--ink-2); }
       .compare-table { width: 100%; border-collapse: collapse; table-layout: fixed; font-size: 14.5px; }
@@ -1578,15 +1583,21 @@
       }
 
       /* ---------------- Side-by-side comparison ----------------
-         For the selected alternative, rendered at the very top of
-         the results panel, first on the list, before the pick list,
+         For the selected alternative, rendered at the absolute top
+         of the results panel, first on the list, directly under the
+         panel heading and above the customer-model summary, the
+         estimated-spec notice, the bulk pack data, the pick list,
          step-ups, size-up, and Holiday sections: a three-column
          table matching the example picture, with Feature on the
          left, the customer's model in the middle column, and the
          selected alternative in the right column, side by side.
          Only the detailed rows where the two models actually
          differ are shown, in the picture's order; rows where both
-         values are identical are filtered out.
+         values are identical are filtered out, and the
+         "(estimated)" marker is ignored when comparing, so a row
+         that differs only by that marker is filtered out too. If
+         no feature actually differs, a single note says so
+         instead of an empty table.
          Values come from the detailed specs: the labelled Key specs
          are split into their parts, and where this model's own
          entry is blank the same series / generation in the library
@@ -1811,11 +1822,18 @@
         estimated[5] = !gm;
         return DETAIL_ROWS.map(function (label, i) { return [label, estimated[i] ? values[i] + " (estimated)" : values[i]]; });
       }
+      function compareBaseValue(v) {
+        /* For deciding whether a row actually differs, ignore the
+           "(estimated)" marker: a row where the underlying value is
+           the same and only the estimated flag differs is not a
+           difference, just like an identical row. */
+        return String(v == null ? "" : v).replace(/\s*\(estimated\)/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
+      }
       function compareHtml(orig, alt, why) {
         var of = detailedFacts(orig), af = detailedFacts(alt), rows = "";
         var diffCount = 0;
         for (var i = 0; i < DETAIL_ROWS.length; i++) {
-          if (of[i][1] === af[i][1]) continue;
+          if (compareBaseValue(of[i][1]) === compareBaseValue(af[i][1])) continue;
           diffCount++;
           rows += '<tr><th scope="row">' + esc(DETAIL_ROWS[i]) + '</th>' +
             '<td>' + esc(of[i][1]) + '</td>' +
@@ -1883,15 +1901,18 @@
           compareWhy = compareCandidates[0].why;
           compareCode = compareAlt.code;
         }
-        /* The comparison sits at the very top of the results panel,
-           first on the list, before the pick list, step-ups, size-up,
-           and Holiday sections. It shows the first pick by default,
-           and tapping another alternative updates this same top
-           comparison. */
+        /* The comparison sits at the absolute top of the results
+           panel, first on the list, directly under the "Send the
+           first one you can" heading and above everything else in
+           the panel: the customer-model summary, the estimated-spec
+           notice, the bulk pack data, the pick list, step-ups,
+           size-up, and Holiday sections. It shows the first pick by
+           default, and tapping another alternative updates this
+           same top comparison. */
+        if (compareAlt) html += compareHtml(m, compareAlt, compareWhy);
+
         html += '<div class="orig"><span class="code mono">' + m.code + '</span>' +
           '<span class="meta">' + metaLine(m) + '</span></div>' + estimateHtml(m) + flagHtml(m) + packHtml(m);
-
-        if (compareAlt) html += compareHtml(m, compareAlt, compareWhy);
 
         var excludedCount = Object.keys(EXCLUDED).length;
         if (excludedCount) {

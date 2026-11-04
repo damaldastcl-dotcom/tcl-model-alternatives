@@ -354,6 +354,13 @@
         .compare-table col.col-model { width: 35%; }
       }
       .diff-none { margin: 0; font-size: 13.5px; color: var(--ink-2); }
+      .compare-table col.col-feature { width: 25%; }
+      .compare-table col.col-model { width: 25%; }
+      .compare-table thead .col-code { display: block; }
+      .compare-table thead .tag, .compare-table thead .compare-year { display: inline-block; margin: 6px 6px 0 0; }
+      .compare-year { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); border: 1px solid var(--accent); }
+      .fourth-pick { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); }
+      .fourth-pick .tag, .fourth-pick .compare-year { margin-left: 6px; }
 
       /* Report an issue link, on the main screen */
       .report-issue {
@@ -1144,7 +1151,7 @@
         var html = '<div class="holiday-group"><h3>Holiday path &middot; 2024 Holiday Model Guide</h3>' +
           '<p class="sub">The <span class="mono">' + esc(m.code) + '</span> is a 2024 Holiday model (' + e.region + '). Holiday models are one-time and generally unavailable, so the guide replacement is generally an upgrade, at the same size. Work this path first, then the normal order below.</p>';
         function altRow(model, tagText) {
-          return '<div class="alt-pick can-compare" role="button" tabindex="0" aria-label="Compare ' + esc(model.code) + ' with customer&rsquo;s model" data-compare="' + esc(model.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + esc(model.code) + '</span>' +
+          return '<div class="alt-pick"><span class="pick-code mono">' + esc(model.code) + '</span>' +
             '<span class="tag holiday">' + tagText + '</span>' +
             '<span class="pick-meta">' + metaLine(model) + '</span></div>';
         }
@@ -1605,8 +1612,7 @@
          models in the picture carry their pictured values exactly
          in DETAIL_OVERRIDES below. Coarse rows (Series, Tier, a
          single Key specs string) are never used in this table. */
-      var compareCode = null;
-      var compareOrigCode = null;
+      /* Comparison columns are fixed to the 1st, 2nd, and 3rd main picks, so no tapped comparison state is kept. */
 
       /* The pack "Key specs" string is a list of "Label: value" pairs
          (Backlight, Resolution, Refresh, Gaming, HDR, HDMI, Audio,
@@ -1829,29 +1835,53 @@
            difference, just like an identical row. */
         return String(v == null ? "" : v).replace(/\s*\(estimated\)/gi, "").replace(/\s+/g, " ").trim().toLowerCase();
       }
-      function compareHtml(orig, alt, why) {
-        var of = detailedFacts(orig), af = detailedFacts(alt), rows = "";
-        var diffCount = 0;
+      function pickYear(p) {
+        return (p.model.gen && p.model.gen.year) ? p.model.gen.year : 9999;
+      }
+      function pickYearText(p) {
+        return (p.model.gen && p.model.gen.year) ? p.model.gen.year + ' model year' : 'Year not stated';
+      }
+      function comparePickOrder(a, b) {
+        var ya = pickYear(a), yb = pickYear(b);
+        if (ya !== yb) return ya - yb;
+        var ta = (a.model.fam && a.model.fam.tier) ? a.model.fam.tier : 999;
+        var tb = (b.model.fam && b.model.fam.tier) ? b.model.fam.tier : 999;
+        if (ta !== tb) return ta - tb;
+        return a.model.code < b.model.code ? -1 : (a.model.code > b.model.code ? 1 : 0);
+      }
+      function compareIndicatorHtml(p) {
+        return '<span class="tag ' + (p.tagClass || '') + '">' + esc(p.tag) + '</span>' +
+          '<span class="compare-year">' + esc(pickYearText(p)) + '</span>';
+      }
+      function compareHtml(colPicks, fourthPick) {
+        if (!colPicks || !colPicks.length) return '';
+        var facts = colPicks.map(function (p) { return detailedFacts(p.model); });
+        var rows = "", diffCount = 0;
         for (var i = 0; i < DETAIL_ROWS.length; i++) {
-          if (compareBaseValue(of[i][1]) === compareBaseValue(af[i][1])) continue;
+          var first = compareBaseValue(facts[0][i][1]);
+          var diff = facts.some(function (f) { return compareBaseValue(f[i][1]) !== first; });
+          if (!diff) continue;
           diffCount++;
           rows += '<tr><th scope="row">' + esc(DETAIL_ROWS[i]) + '</th>' +
-            '<td>' + esc(of[i][1]) + '</td>' +
-            '<td class="alt-cell">' + esc(af[i][1]) + '</td></tr>';
+            facts.map(function (f) { return '<td>' + esc(f[i][1]) + '</td>'; }).join('') + '</tr>';
         }
+        var fourthLine = fourthPick ?
+          '<p class="fourth-pick">4th pick, not in the columns: <span class="mono">' + esc(fourthPick.model.code) + '</span>' + compareIndicatorHtml(fourthPick) + '</p>' : '';
         if (!diffCount) {
           return '<div class="compare-wrap" id="compareSection"><h3>Side-by-side comparison</h3>' +
-            (why ? '<p class="sub">' + esc(orig.code) + ' vs ' + esc(alt.code) + '. ' + why + '</p>' : '') +
-            '<p class="diff-none">No differing features were found between ' + esc(orig.code) + ' and ' + esc(alt.code) + '.</p></div>';
+            '<p class="sub">1st, 2nd, and 3rd picks, oldest to newest.</p>' +
+            '<p class="diff-none">No differing features were found between ' + colPicks.map(function (p) { return esc(p.model.code); }).join(', ') + '.</p>' + fourthLine + '</div>';
         }
-        var body = '<table class="compare-table"><colgroup><col class="col-feature"><col class="col-model"><col class="col-model"></colgroup>' +
-          '<thead><tr><th scope="col">Feature</th>' +
-          '<th scope="col"><span class="col-code">' + esc(orig.code) + '</span></th>' +
-          '<th scope="col"><span class="col-code">' + esc(alt.code) + '</span></th></tr></thead>' +
+        var cols = '<col class="col-feature">' + colPicks.map(function () { return '<col class="col-model">'; }).join('');
+        var head = colPicks.map(function (p) {
+          return '<th scope="col"><span class="col-code">' + esc(p.model.code) + '</span>' + compareIndicatorHtml(p) + '</th>';
+        }).join('');
+        var body = '<table class="compare-table"><colgroup>' + cols + '</colgroup>' +
+          '<thead><tr><th scope="col">Feature</th>' + head + '</tr></thead>' +
           '<tbody>' + rows + '</tbody></table>';
         return '<div class="compare-wrap" id="compareSection"><h3>Side-by-side comparison</h3>' +
-          (why ? '<p class="sub">' + esc(orig.code) + ' vs ' + esc(alt.code) + '. ' + why + '</p>' : '') +
-          body + '</div>';
+          '<p class="sub">1st, 2nd, and 3rd picks, oldest to newest.</p>' +
+          body + fourthLine + '</div>';
       }
 
       function selectModel(m, fromSearch) {
@@ -1860,56 +1890,30 @@
         var L = m.bulk ? buildBulkLadder(m) : buildLadder(m);
         var html = "";
 
-        /* Which alternative the comparison shows: the first pick by
-           default, or the one the agent tapped. Kept while the same
-           customer's model stays selected. */
-        var compareCandidates = [];
-        L.picks.forEach(function (p) { compareCandidates.push({ model: p.model, why: p.why }); });
-        if (L.upgrades) L.upgrades.forEach(function (u) { compareCandidates.push({ model: u.model, why: u.why }); });
-        if (L.sizeUp) compareCandidates.push({ model: L.sizeUp, why: L.sizeUpWhy });
-        if (L.downgrade && L.downgrade.code !== m.code) compareCandidates.push({ model: L.downgrade, why: "One step down from the " + m.fam.label + ", only with the customer&rsquo;s agreement." });
-        /* Holiday guide alternative is also comparable, even when it
-           is not in the normal picks above. */
-        (function () {
-          var he = HOLIDAY[normalize(m.code)];
-          if (!he) return;
-          var hc = he.type === "specific" ? he.alt : (he.resolved || null);
-          if (!hc || isExcluded(hc)) return;
-          var hm = MODEL_BY_CODE[normalize(hc)];
-          if (!hm || hm.code === m.code) return;
-          if (compareCandidates.some(function (c) { return c.model.code === hm.code; })) return;
-          compareCandidates.push({ model: hm, why: "Guide alternative for this Holiday model, at the same size." });
-        })();
-        if (compareOrigCode !== m.code) {
-          compareOrigCode = m.code;
-          compareCode = compareCandidates.length ? compareCandidates[0].model.code : null;
+        /* The comparison columns are the 1st, 2nd, and 3rd main
+           picks, sorted oldest to newest, with the 4th pick named
+           in a separate line directly under the table. */
+        var sortedPicks = L.picks.slice().sort(comparePickOrder);
+        var compareSource = sortedPicks.slice();
+        /* If main picks alone give fewer than 3 columns, fill the
+           remaining columns from the step-up upgrades, in the same
+           oldest to newest order, so the table does not collapse
+           to a single column or disappear for models with few main
+           picks, such as 65Q77K. Size-up and downgrade options are
+           never used as columns. */
+        if (compareSource.length < 3 && L.upgrades) {
+          L.upgrades.forEach(function (u) { compareSource.push({ model: u.model, tag: stepName(u.step), tagClass: "" }); });
+          compareSource.sort(comparePickOrder);
         }
-        /* If the previously compared model is now excluded, or is no
-           longer offered, fall back to the first candidate so the
-           side-by-side table always renders for the first pick. */
-        if (compareCode && isExcluded(compareCode)) {
-          compareCode = compareCandidates.length ? compareCandidates[0].model.code : null;
-        }
-        var compareAlt = null, compareWhy = "";
-        compareCandidates.forEach(function (c) { if (c.model.code === compareCode) { compareAlt = c.model; compareWhy = c.why; } });
-        if (!compareAlt && compareCode) {
-          var cm = MODEL_BY_CODE[compareCode] || MODEL_BY_CODE[normalize(compareCode)];
-          if (cm && cm.code !== m.code && !isExcluded(cm.code)) { compareAlt = cm; }
-        }
-        if (!compareAlt && compareCandidates.length) {
-          compareAlt = compareCandidates[0].model;
-          compareWhy = compareCandidates[0].why;
-          compareCode = compareAlt.code;
-        }
+        var compareCols = compareSource.slice(0, 3);
+        var fourthPick = compareSource.length > 3 ? compareSource[3] : null;
         /* The comparison sits at the absolute top of the results
            panel, first on the list, directly under the "Send the
            first one you can" heading and above everything else in
            the panel: the customer-model summary, the estimated-spec
            notice, the bulk pack data, the pick list, step-ups,
-           size-up, and Holiday sections. It shows the first pick by
-           default, and tapping another alternative updates this
-           same top comparison. */
-        if (compareAlt) html += compareHtml(m, compareAlt, compareWhy);
+           size-up, and Holiday sections. */
+        if (compareCols.length) html += compareHtml(compareCols, fourthPick);
 
         html += '<div class="orig"><span class="code mono">' + m.code + '</span>' +
           '<span class="meta">' + metaLine(m) + '</span></div>' + estimateHtml(m) + flagHtml(m) + packHtml(m);
@@ -1939,14 +1943,15 @@
             if (p.group === "cross") {
               flag += '<div class="os-flag"><strong>Different platform:</strong> this changes the TV platform from ' + OS_NAMES[m.fam.os] + ' to ' + OS_NAMES[p.model.fam.os] + '. The picker keeps the same platform by default, so confirm the customer agrees to the platform change before offering this model.</div>';
             }
-            var isCmp = compareAlt && p.model.code === compareAlt.code;
-            html += '<div class="pick can-compare' + (i === 0 ? " first" : "") + (isCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(p.model.code) + ' with customer&rsquo;s model" data-compare="' + esc(p.model.code) + '" title="Tap to compare with the customer&rsquo;s model">' +
+            var isCmp = compareCols.some(function (c) { return c.model.code === p.model.code; });
+            var isFourth = fourthPick && p.model.code === fourthPick.model.code;
+            html += '<div class="pick' + (i === 0 ? " first" : "") + (isCmp ? " compare-selected" : "") + '">' +
               '<div class="rank" aria-hidden="true">' + (i + 1) + '</div>' +
               '<div class="pick-main">' +
                 '<div class="pick-top"><span class="pick-code mono">' + p.model.code + '</span>' +
                 '<span class="tag ' + p.tagClass + '">' + p.tag + '</span>' +
                 '<span class="pick-year">' + (p.model.gen.year ? p.model.gen.year + ' model year' : 'Bulk pack') + '</span>' +
-                '<span class="compare-state">' + (isCmp ? "Comparing at top" : "Tap to compare") + '</span></div>' +
+                '<span class="compare-state">' + (isCmp ? "In comparison" : (isFourth ? "4th pick" : "")) + '</span></div>' +
                 '<div class="pick-meta">' + metaLine(p.model) + '</div>' +
                 '<div class="pick-why">' + p.why + '</div>' + flag + estimateHtml(p.model) + flagHtml(p.model) + packHtml(p.model) +
               '</div></div>';
@@ -1959,11 +1964,11 @@
             '<p class="sub">Higher series at the same ' + m.size + '&Prime; size on the same ' + OS_NAMES[m.fam.os] + ' platform. Each option is labelled by how many series levels it sits above the customer&rsquo;s model, so a jump reads as a jump. One level at a time is the norm: the 2nd and 3rd upgrades need approval before they are offered, and nothing past the 3rd upgrade is shown.' +
             (anyEstUp ? ' Options marked Estimated rest on a guessed tier: they are estimated step-ups that need validation, not confirmed upgrades.' : '') + '</p>';
           L.upgrades.forEach(function (u) {
-            var uCmp = compareAlt && u.model.code === compareAlt.code;
-            html += '<div class="alt-pick can-compare' + (uCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(u.model.code) + ' with customer&rsquo;s model" data-compare="' + esc(u.model.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + u.model.code + '</span>' +
+            var uCmp = compareCols.some(function (c) { return c.model.code === u.model.code; });
+            html += '<div class="alt-pick' + (uCmp ? " compare-selected" : "") + '"><span class="pick-code mono">' + u.model.code + '</span>' +
               '<span class="step-badge s' + u.step + '">' + stepName(u.step) + '</span>' +
               (u.estimated ? ' <span class="est-badge">Estimated</span>' : '') +
-              '<span class="compare-state">' + (uCmp ? "Comparing at top" : "Tap to compare") + '</span>' +
+              (uCmp ? '<span class="compare-state">In comparison</span>' : '') +
               '<span class="pick-meta">' + metaLine(u.model) + ' &middot; ' + u.why + '</span></div>';
             if (u.step === 3) {
               html += '<div class="approval-flash" role="alert">Approval needed before offering: this is a 3-level upgrade from the customer&rsquo;s model.</div>';
@@ -1989,26 +1994,22 @@
         }
 
         if (L.sizeUp) {
-          var sizeCmp = compareAlt && L.sizeUp.code === compareAlt.code;
           html += '<div class="size-group"><h3>' +
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>' +
             'One size step up <span class="sep-badge">Separate option</span></h3>' +
             '<p class="sub">Not part of the main pick order above. Offer this only if no main pick is available, get the customer&rsquo;s agreement first, and note the agreement in the case.</p>' +
-            '<div class="alt-pick can-compare' + (sizeCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(L.sizeUp.code) + ' with customer&rsquo;s model" data-compare="' + esc(L.sizeUp.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + L.sizeUp.code + '</span>' +
-            '<span class="compare-state">' + (sizeCmp ? "Comparing at top" : "Tap to compare") + '</span>' +
+            '<div class="alt-pick"><span class="pick-code mono">' + L.sizeUp.code + '</span>' +
             '<span class="pick-meta">' + metaLine(L.sizeUp) + ' &middot; ' + L.sizeUpWhy + '</span></div>' +
             estimateHtml(L.sizeUp) + flagHtml(L.sizeUp) + packHtml(L.sizeUp) +
             '</div>';
         }
 
         if (L.downgrade && L.downgrade.code !== m.code) {
-          var downCmp = compareAlt && L.downgrade.code === compareAlt.code;
           html += '<div class="alt-group"><h3>' +
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>' +
             'Only if nothing above is available</h3>' +
             '<p class="sub">This steps down from what the customer paid for. Get the customer&rsquo;s agreement first and note the agreement in the case.</p>' +
-            '<div class="alt-pick can-compare' + (downCmp ? " compare-selected" : "") + '" role="button" tabindex="0" aria-label="Compare ' + esc(L.downgrade.code) + ' with customer&rsquo;s model" data-compare="' + esc(L.downgrade.code) + '" title="Tap to compare with the customer&rsquo;s model"><span class="pick-code mono">' + L.downgrade.code + '</span>' +
-            '<span class="compare-state">' + (downCmp ? "Comparing at top" : "Tap to compare") + '</span>' +
+            '<div class="alt-pick"><span class="pick-code mono">' + L.downgrade.code + '</span>' +
             '<span class="pick-meta">' + metaLine(L.downgrade) + ' &middot; one step down from the ' + m.fam.label + '</span></div>' +
             '</div>';
         }
@@ -2021,20 +2022,6 @@
 
         resultsEl.innerHTML = html;
 
-        resultsEl.querySelectorAll("[data-compare]").forEach(function (el) {
-          function activate() {
-            var code = el.getAttribute("data-compare");
-            if (!code || code === compareCode) return;
-            compareCode = code;
-            selectModel(selected, true);
-            var cw = document.getElementById("compareSection");
-            if (cw) cw.scrollIntoView({ behavior: "smooth", block: "nearest" });
-          }
-          el.addEventListener("click", activate);
-          el.addEventListener("keydown", function (ev) {
-            if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); activate(); }
-          });
-        });
 
         document.getElementById("copyBtn").addEventListener("click", function () {
           var lines = [];

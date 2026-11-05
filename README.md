@@ -37,7 +37,8 @@ a separate line directly under the table.
 - Inventory section: Section 3 on the picker page. Type a model number
   to see USA A stock, and Canada A stock and B stock separately from
   Canada FG, TV category only, 28 models. A model not in the file
-  shows 0 in this section. The top notice states the inventory date.
+  shows 0 in this section. The top notice states the inventory date
+  and publish time.
   Daily check: weekdays at 9:30am Pacific, silent on days with no new
   ASP file. New files replace the prior day data and are published
   to GitHub as soon as ready.

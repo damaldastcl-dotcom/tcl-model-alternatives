@@ -6,8 +6,7 @@ When a customer's TCL TV model is out of stock, type that model in and the
 picker shows which model to send instead, in this order: same size, same
 series, same generation first, then next generation, then a different OS as
 a platform change needing customer agreement. It also shows 1st, 2nd, and
-3rd step-up upgrades, with approval flags on the 2nd and 3rd, a Holiday
-path for 2024 Holiday models, an Exclude list for models already known to
+3rd step-up upgrades, with approval flags on the 2nd and 3rd, an Exclude list for models already known to
 be unavailable, and a side-by-side comparison table with the 1st, 2nd,
 and 3rd picks as columns, oldest to newest, with the 4th pick named in
 a separate line directly under the table.
@@ -25,11 +24,11 @@ a separate line directly under the table.
   and the 1st, 2nd, and 3rd pick columns side by side on the right, with
   only rows that differ between those picks shown. Each column header
   shows the pick tag and the model year.
-- OS swap disclaimer: every different OS pick, including Holiday alternatives that change platform, carries a disclaimer on its card and in the copy list. Do not offer a platform change proactively. Offer only if the customer requested that platform, or if the Warranty Team approves it internally. Fire OS gets an extra sentence: Fire OS is not offered for an OS swap except as an approved exception. Fire picks stay visible, they are not removed.
+- OS swap disclaimer: every different OS pick carries a disclaimer on its card and in the copy list. Do not offer a platform change proactively. Offer only if the customer requested that platform, or if the Warranty Team approves it internally. Fire OS gets an extra sentence: Fire OS is not offered for an OS swap except as an approved exception. Fire picks stay visible, they are not removed.
 - Quantity indicators: a blue QTY pill sits above the model number
   wherever a model with a known quantity is listed: comparison headers,
   the 4th pick line, the customer-model summary, main pick cards,
-  step-up, size-up, downgrade, Holiday options, and left search chips.
+  step-up, size-up, downgrade, and left search chips.
   Quantities are real ASP data, never guessed. Current source: ASP
   Inventory Report, November 5, 2026. USA QTY is A stock from ITI FG
   Inventory, TV category only, 89 models. A model in that tab with
@@ -42,3 +41,9 @@ a separate line directly under the table.
   Daily check: weekdays at 9:30am Pacific, silent on days with no new
   ASP file. New files replace the prior day data and are published
   to GitHub as soon as ready.
+- Service area check: a Check service area card sits directly above the
+  inventory banner. Type a US zip (5 digits) or Canada postal code
+  (6 letters and numbers) to check if a technician can be sent there.
+  The lookup is embedded in the page, from Warranty Services ZIP
+  CODES 032024.xlsx, checked November 2, 2026. The top notice above
+  the card states the service area date.

@@ -24,6 +24,9 @@
         --warn: #9a6206;
         --warn-soft: #fdf3e0;
         --warn-line: #e3c98f;
+        --qty: #1a4d8f;
+        --qty-soft: #e3eefc;
+        --qty-border: #8fb8e8;
         --chip: #eceef1;
         --chip-hover: #e0e4ea;
         --pick-border: #16191f;
@@ -48,6 +51,9 @@
           --warn: #e3b34c;
           --warn-soft: #37301c;
           --warn-line: #6b5c2e;
+          --qty: #8ec2ff;
+          --qty-soft: #1c355e;
+          --qty-border: #5a8fd0;
           --chip: #262b33;
           --chip-hover: #31363f;
           --pick-border: #f0f2f5;
@@ -359,6 +365,9 @@
       .compare-table thead .col-code { display: block; }
       .compare-table thead .tag, .compare-table thead .compare-year { display: inline-block; margin: 6px 6px 0 0; }
       .compare-year { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink); border: 1px solid var(--accent); }
+      .qty-indicator { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--qty-soft); color: var(--qty); border: 1px solid var(--qty-border); display: inline-block; }
+      .compare-table thead th .qty-indicator { display: block; width: fit-content; margin-bottom: 6px; }
+      .qty-chip-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
       .fourth-pick { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); }
       .fourth-pick .tag, .fourth-pick .compare-year { margin-left: 6px; }
 
@@ -473,7 +482,7 @@
             <ol class="rules">
               <li><span class="n" aria-hidden="true"></span><span><strong>First: same size, same series, same generation.</strong> The closest match at the customer&rsquo;s size, in the same series and the same model generation, on the same platform. Staying at the same size outranks every other change.</span></li>
               <li><span class="n" aria-hidden="true"></span><span><strong>Second: same size, same series, next generation.</strong> The same series at the same size, one generation newer. A 65QM8K becomes a 65QM8L before any platform change is considered.</span></li>
-              <li><span class="n" aria-hidden="true"></span><span><strong>Third: same size, same series, different OS.</strong> The same series and size on a different platform comes last in the main order. The picker keeps the same platform by default, so a different OS pick is clearly marked and needs the customer&rsquo;s agreement before it is offered.</span></li>
+              <li><span class="n" aria-hidden="true"></span><span><strong>Third: same size, same series, different OS.</strong> The same series and size on a different platform comes last in the main order. The picker keeps the same platform by default. OS swap disclaimer: do not offer a platform change proactively. Offer only if the customer requested that platform, or if the Warranty Team approves it internally. Fire OS is not offered for an OS swap except as an approved exception.</span></li>
               <li><span class="n" aria-hidden="true"></span><span><strong>Step-up options are labelled by the jump.</strong> Higher series at the same size and on the same platform are offered as a choice, labelled 1st upgrade, 2nd upgrade, and 3rd upgrade, counting series levels above the customer&rsquo;s model. Nothing past the 3rd upgrade is shown. One level at a time is the norm: a 2-level upgrade needs approval first, and a 3rd upgrade is shown so the jump is visible, not as a routine pick.</span></li>
               <li><span class="n" aria-hidden="true"></span><span><strong>One size step up is separate.</strong> A single size up in the same series is not part of the main ranking. It appears on its own below the main picks, clearly marked, and it needs the customer&rsquo;s agreement, noted in the case.</span></li>
               <li><span class="n" aria-hidden="true"></span><span><strong>Never a step down on your own.</strong> If only a lower tier is available, the customer has to agree first and the agreement goes in the case notes. If nothing in the order works, escalate to the Warranty Team lead instead of substituting down.</span></li>
@@ -606,6 +615,17 @@
          model-year records, not read off the suffix letter alone.
       ------------------------------------------------------------------ */
       var OS_NAMES = { google: "Google TV", fire: "Fire TV", roku: "Roku TV", android: "Android TV" };
+
+      /* Quantity indicators, exactly as approved Nov 3, 2026: a blue QTY pill above the model number, wherever that model is listed. Only models with a quantity in this table show a pill. Other models show no pill, never a guessed quantity. Table is empty for the Nov 4, 2026 publish, per Daniel: publish without the example quantities. Real ASP quantities go here when they are ready. */
+      var QTY_BY_CODE = {};
+      function qtyFor(code) { return QTY_BY_CODE[code]; }
+      function qtyHtml(code) { var q = qtyFor(code); return q === undefined ? "" : '<span class="qty-indicator">QTY ' + q + '</span>'; }
+      /* OS swap disclaimer, Nov 4, 2026, per Daniel: all OS swaps, not just Fire, are not proactively offered. Offer only if the customer requested this platform, or if the Warranty Team approves it internally. Fire OS gets the extra sentence from the Drop Shipping reference. */
+      function osSwapFlag(fromOs, toOs) {
+        var txt = '<div class="os-flag"><strong>OS swap disclaimer:</strong> Do not offer this platform change proactively. Offer only if the customer requested this platform, or if the Warranty Team approves it internally.';
+        if (toOs === "fire") txt += ' Fire OS is not offered for an OS swap except as an approved exception.';
+        return txt + '</div>';
+      }
 
       var FAMILIES = [
         /* Google TV */
@@ -1151,9 +1171,9 @@
         var html = '<div class="holiday-group"><h3>Holiday path &middot; 2024 Holiday Model Guide</h3>' +
           '<p class="sub">The <span class="mono">' + esc(m.code) + '</span> is a 2024 Holiday model (' + e.region + '). Holiday models are one-time and generally unavailable, so the guide replacement is generally an upgrade, at the same size. Work this path first, then the normal order below.</p>';
         function altRow(model, tagText) {
-          return '<div class="alt-pick"><span class="pick-code mono">' + esc(model.code) + '</span>' +
+          return '<div class="alt-pick">' + qtyHtml(model.code) + '<span class="pick-code mono">' + esc(model.code) + '</span>' +
             '<span class="tag holiday">' + tagText + '</span>' +
-            '<span class="pick-meta">' + metaLine(model) + '</span></div>';
+            '<span class="pick-meta">' + metaLine(model) + '</span></div>' + (model.fam.os !== m.fam.os ? osSwapFlag(m.fam.os, model.fam.os) : '');
         }
         function generalFallback() {
           if (L.upgrades && L.upgrades.length) {
@@ -1198,14 +1218,15 @@
           html += altRow(altModel, "Holiday / upgrade") + '<p class="sub">' + why + '</p>';
           if (e.note) html += '<p class="sub">' + e.note + '</p>';
           if (e.unverified) html += '<div class="src-flag"><strong>Unverified:</strong> the guide prints this alternative as <span class="mono">' + esc(altCode) + '</span> with no OS suffix shown. It is shown as printed. Verify it before offering.</div>';
-          if (altModel.fam.os !== m.fam.os) html += '<div class="os-flag"><strong>Different platform:</strong> this Holiday alternative changes the TV platform from ' + OS_NAMES[m.fam.os] + ' to ' + OS_NAMES[altModel.fam.os] + '. Confirm the customer agrees to the platform change before offering this model.</div>';
+          if (altModel.fam.os !== m.fam.os) html += osSwapFlag(m.fam.os, altModel.fam.os);
           html += estimateHtml(altModel) + flagHtml(altModel) + packHtml(altModel);
           copy.push("Guide alternative: " + altModel.code + " - Holiday / upgrade" +
             (e.type === "series" ? " (" + e.series + ", series only, resolved to a same-size model in that series)" : "") +
             (e.unverified ? " (as printed in the guide, no OS suffix shown, unverified)" : "") + ".");
+          if (altModel.fam.os !== m.fam.os) copy.push("OS swap disclaimer for " + altModel.code + ": do not offer proactively, Warranty Team approval required unless customer requested this platform.");
           if (e.note) copy.push("Note: " + e.note);
         } else {
-          html += '<div class="alt-pick"><span class="pick-code mono">' + esc(altCode) + '</span>' +
+          html += '<div class="alt-pick">' + qtyHtml(altCode) + '<span class="pick-code mono">' + esc(altCode) + '</span>' +
             '<span class="tag holiday">Holiday / upgrade</span>' +
             '<span class="pick-meta">Guide alternative as printed, same ' + m.size + '&Prime; size.</span></div>' +
             '<div class="src-flag"><strong>Not in the picker library:</strong> <span class="mono">' + esc(altCode) + '</span> is named in the guide but is not in this picker&rsquo;s model library, so its specs are not shown here. Check it against the guide or a retailer listing before offering it. If it is not available, use the step-up options below as the general upgrade.</div>';
@@ -1245,8 +1266,9 @@
 
         /* Guide order 3: same size, same series, different OS. The
            same-platform picks above always come first. These change
-           the platform, so they are marked and need the customer's
-           agreement. Closest generation to the original year first. */
+           the platform, so they carry the OS swap disclaimer: not
+           proactively offered, customer request or Warranty Team
+           internal approval required. Closest generation to the original year first. */
         var group = SERIES_GROUP[fam.id];
         if (group) {
           var cross = [];
@@ -1412,7 +1434,7 @@
               c.textContent = code;
               c.setAttribute("aria-pressed", selected && selected.code === code ? "true" : "false");
               c.addEventListener("click", function () { selectModel(MODEL_BY_CODE[code]); });
-              chips.appendChild(c);
+              if (QTY_BY_CODE[code] !== undefined) { var wrap = document.createElement("div"); wrap.className = "qty-chip-wrap"; var q = document.createElement("span"); q.className = "qty-indicator"; q.textContent = "QTY " + QTY_BY_CODE[code]; wrap.appendChild(q); wrap.appendChild(c); chips.appendChild(wrap); } else { chips.appendChild(c); }
             });
             div.appendChild(chips);
             listEl.appendChild(div);
@@ -1442,7 +1464,7 @@
             c.textContent = mm.code;
             c.setAttribute("aria-pressed", selected && selected.code === mm.code ? "true" : "false");
             c.addEventListener("click", function () { selectModel(mm); });
-            chips.appendChild(c);
+            if (QTY_BY_CODE[mm.code] !== undefined) { var wrap2 = document.createElement("div"); wrap2.className = "qty-chip-wrap"; var q2 = document.createElement("span"); q2.className = "qty-indicator"; q2.textContent = "QTY " + QTY_BY_CODE[mm.code]; wrap2.appendChild(q2); wrap2.appendChild(c); chips.appendChild(wrap2); } else { chips.appendChild(c); }
           });
           div.appendChild(chips);
           listEl.appendChild(div);
@@ -1866,7 +1888,7 @@
             facts.map(function (f) { return '<td>' + esc(f[i][1]) + '</td>'; }).join('') + '</tr>';
         }
         var fourthLine = fourthPick ?
-          '<p class="fourth-pick">4th pick, not in the columns: <span class="mono">' + esc(fourthPick.model.code) + '</span>' + compareIndicatorHtml(fourthPick) + '</p>' : '';
+          '<p class="fourth-pick">4th pick, not in the columns: ' + qtyHtml(fourthPick.model.code) + '<span class="mono">' + esc(fourthPick.model.code) + '</span>' + compareIndicatorHtml(fourthPick) + '</p>' : '';
         if (!diffCount) {
           return '<div class="compare-wrap" id="compareSection"><h3>Side-by-side comparison</h3>' +
             '<p class="sub">1st, 2nd, and 3rd picks, oldest to newest.</p>' +
@@ -1874,7 +1896,7 @@
         }
         var cols = '<col class="col-feature">' + colPicks.map(function () { return '<col class="col-model">'; }).join('');
         var head = colPicks.map(function (p) {
-          return '<th scope="col"><span class="col-code">' + esc(p.model.code) + '</span>' + compareIndicatorHtml(p) + '</th>';
+          return '<th scope="col">' + qtyHtml(p.model.code) + '<span class="col-code">' + esc(p.model.code) + '</span>' + compareIndicatorHtml(p) + '</th>';
         }).join('');
         var body = '<table class="compare-table"><colgroup>' + cols + '</colgroup>' +
           '<thead><tr><th scope="col">Feature</th>' + head + '</tr></thead>' +
@@ -1915,7 +1937,7 @@
            size-up, and Holiday sections. */
         if (compareCols.length) html += compareHtml(compareCols, fourthPick);
 
-        html += '<div class="orig"><span class="code mono">' + m.code + '</span>' +
+        html += (qtyFor(m.code) !== undefined ? '<div>' + qtyHtml(m.code) + '</div>' : '') + '<div class="orig"><span class="code mono">' + m.code + '</span>' +
           '<span class="meta">' + metaLine(m) + '</span></div>' + estimateHtml(m) + flagHtml(m) + packHtml(m);
 
         var excludedCount = Object.keys(EXCLUDED).length;
@@ -1941,13 +1963,14 @@
               flag = '<div class="pick-flag">List price check: this pick lists for less than the original at this size ($' + fmtPrice(MSRP[p.model.code]) + ' vs $' + fmtPrice(MSRP[m.code]) + '). Confirm with the Warranty Team before sending it.</div>';
             }
             if (p.group === "cross") {
-              flag += '<div class="os-flag"><strong>Different platform:</strong> this changes the TV platform from ' + OS_NAMES[m.fam.os] + ' to ' + OS_NAMES[p.model.fam.os] + '. The picker keeps the same platform by default, so confirm the customer agrees to the platform change before offering this model.</div>';
+              flag += osSwapFlag(m.fam.os, p.model.fam.os);
             }
             var isCmp = compareCols.some(function (c) { return c.model.code === p.model.code; });
             var isFourth = fourthPick && p.model.code === fourthPick.model.code;
             html += '<div class="pick' + (i === 0 ? " first" : "") + (isCmp ? " compare-selected" : "") + '">' +
               '<div class="rank" aria-hidden="true">' + (i + 1) + '</div>' +
               '<div class="pick-main">' +
+                (qtyFor(p.model.code) !== undefined ? '<div>' + qtyHtml(p.model.code) + '</div>' : '') +
                 '<div class="pick-top"><span class="pick-code mono">' + p.model.code + '</span>' +
                 '<span class="tag ' + p.tagClass + '">' + p.tag + '</span>' +
                 '<span class="pick-year">' + (p.model.gen.year ? p.model.gen.year + ' model year' : 'Bulk pack') + '</span>' +
@@ -1965,7 +1988,7 @@
             (anyEstUp ? ' Options marked Estimated rest on a guessed tier: they are estimated step-ups that need validation, not confirmed upgrades.' : '') + '</p>';
           L.upgrades.forEach(function (u) {
             var uCmp = compareCols.some(function (c) { return c.model.code === u.model.code; });
-            html += '<div class="alt-pick' + (uCmp ? " compare-selected" : "") + '"><span class="pick-code mono">' + u.model.code + '</span>' +
+            html += '<div class="alt-pick' + (uCmp ? " compare-selected" : "") + '">' + qtyHtml(u.model.code) + '<span class="pick-code mono">' + u.model.code + '</span>' +
               '<span class="step-badge s' + u.step + '">' + stepName(u.step) + '</span>' +
               (u.estimated ? ' <span class="est-badge">Estimated</span>' : '') +
               (uCmp ? '<span class="compare-state">In comparison</span>' : '') +
@@ -1998,7 +2021,7 @@
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>' +
             'One size step up <span class="sep-badge">Separate option</span></h3>' +
             '<p class="sub">Not part of the main pick order above. Offer this only if no main pick is available, get the customer&rsquo;s agreement first, and note the agreement in the case.</p>' +
-            '<div class="alt-pick"><span class="pick-code mono">' + L.sizeUp.code + '</span>' +
+            '<div class="alt-pick">' + qtyHtml(L.sizeUp.code) + '<span class="pick-code mono">' + L.sizeUp.code + '</span>' +
             '<span class="pick-meta">' + metaLine(L.sizeUp) + ' &middot; ' + L.sizeUpWhy + '</span></div>' +
             estimateHtml(L.sizeUp) + flagHtml(L.sizeUp) + packHtml(L.sizeUp) +
             '</div>';
@@ -2009,7 +2032,7 @@
             '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>' +
             'Only if nothing above is available</h3>' +
             '<p class="sub">This steps down from what the customer paid for. Get the customer&rsquo;s agreement first and note the agreement in the case.</p>' +
-            '<div class="alt-pick"><span class="pick-code mono">' + L.downgrade.code + '</span>' +
+            '<div class="alt-pick">' + qtyHtml(L.downgrade.code) + '<span class="pick-code mono">' + L.downgrade.code + '</span>' +
             '<span class="pick-meta">' + metaLine(L.downgrade) + ' &middot; one step down from the ' + m.fam.label + '</span></div>' +
             '</div>';
         }
@@ -2039,7 +2062,7 @@
           if (L.picks.length) {
             L.picks.forEach(function (p, i) {
               var line = (i + 1) + ". " + p.model.code + " - " + p.tag.toLowerCase() + ", " + (p.model.gen.year || "bulk pack, year not stated");
-              if (p.group === "cross") line += " (different platform: customer agreement required)";
+              if (p.group === "cross") line += " (OS swap disclaimer: do not offer proactively, Warranty Team approval required unless customer requested this platform" + (p.model.fam.os === "fire" ? ", Fire OS swap exception only" : "") + ")";
               if (effectiveTier(p.model).estimated) line += " (tier estimated - validate)";
               if (effectivePanel(p.model).estimated) line += " (panel estimated - validate)";
               lines.push(line);

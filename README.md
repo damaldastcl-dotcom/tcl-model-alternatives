@@ -25,3 +25,11 @@ a separate line directly under the table.
   and the 1st, 2nd, and 3rd pick columns side by side on the right, with
   only rows that differ between those picks shown. Each column header
   shows the pick tag and the model year.
+- OS swap disclaimer: every different OS pick, including Holiday alternatives that change platform, carries a disclaimer on its card and in the copy list. Do not offer a platform change proactively. Offer only if the customer requested that platform, or if the Warranty Team approves it internally. Fire OS gets an extra sentence: Fire OS is not offered for an OS swap except as an approved exception. Fire picks stay visible, they are not removed.
+- Quantity indicators: a blue QTY pill sits above the model number
+  wherever a model with a known quantity is listed: comparison headers,
+  the 4th pick line, the customer-model summary, main pick cards,
+  step-up, size-up, downgrade, Holiday options, and left search chips.
+  The quantity table is empty in this publish, per Daniel on Nov 4,
+  2026: publish without the example quantities. No pill shows until
+  a real quantity is added. Never a guessed quantity.

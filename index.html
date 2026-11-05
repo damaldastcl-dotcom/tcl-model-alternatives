@@ -368,6 +368,12 @@
       .qty-indicator { font-size: 11.5px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 3px 8px; border-radius: 999px; background: var(--qty-soft); color: var(--qty); border: 1px solid var(--qty-border); display: inline-block; }
       .compare-table thead th .qty-indicator { display: block; width: fit-content; margin-bottom: 6px; }
       .qty-chip-wrap { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+      .inv-notice { margin: 12px 0 0; padding: 10px 12px; border-radius: var(--radius); background: var(--qty-soft); color: var(--ink); border: 1px solid var(--qty-border); font-size: 14px; }
+      .inv-section { margin-top: 16px; }
+      .inv-row { display: flex; gap: 8px; align-items: center; margin-top: 12px; }
+      .inv-row input { flex: 1; }
+      .inv-result { margin-top: 12px; font-size: 15px; color: var(--ink); }
+      .inv-result p { margin: 4px 0; }
       .fourth-pick { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); }
       .fourth-pick .tag, .fourth-pick .compare-year { margin-left: 6px; }
 
@@ -431,6 +437,8 @@
         <a class="report-issue" href="https://docs.google.com/forms/d/e/1FAIpQLSfErRHc0tYHZdTt94Ws59GH1HJ245DhpglFyumpmIZtiCwL2Q/viewform" target="_blank" rel="noopener">Report an issue <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg></a>
       </header>
 
+      <p class="inv-notice">Inventory updated: November 2, 2026. Source: ASP Inventory Report. USA uses A stock from ITI FG Inventory. Canada shows A stock and B stock separately from Canada FG.</p>
+
       <div class="layout">
         <!-- Picker -->
         <section class="card picker" aria-label="Pick the customer's model">
@@ -472,6 +480,20 @@
           </div>
         </section>
       </div>
+
+      <section class="card inv-section" aria-label="Inventory">
+        <div class="card-head">
+          <h2>3 &middot; Inventory</h2>
+          <p>Type a model number to see how many are on hand. USA shows A stock. Canada shows A stock and B stock separately. A model not in the file shows 0.</p>
+        </div>
+        <div class="card-body">
+          <div class="inv-row">
+            <input id="invSearch" type="search" autocomplete="off" placeholder="Model number, e.g. 55QM64L" aria-label="Check inventory by model number" />
+            <button type="button" class="btn" id="invCheck">Check</button>
+          </div>
+          <div class="inv-result" id="invResult"></div>
+        </div>
+      </section>
 
       <footer class="ref-area" aria-label="Reference and guide links">
         <h2 class="ref-title">Reference &amp; guides</h2>
@@ -617,7 +639,10 @@
       var OS_NAMES = { google: "Google TV", fire: "Fire TV", roku: "Roku TV", android: "Android TV" };
 
       /* Quantity indicators, exactly as approved Nov 3, 2026: a blue QTY pill above the model number, wherever that model is listed. Only models with a quantity in this table show a pill. Other models show no pill, never a guessed quantity. Table is empty for the Nov 4, 2026 publish, per Daniel: publish without the example quantities. Real ASP quantities go here when they are ready. */
-      var QTY_BY_CODE = {};
+      /* ASP inventory, November 2, 2026 report. USA A stock from ITI FG Inventory, TV category only. Canada A and B from Canada FG, TV category only, keyed by model without the -CA suffix. A model not in a tab shows 0 in the inventory section. */
+      var INV_UPDATED = "November 2, 2026";
+      var QTY_BY_CODE = {"115QM7K":2,"115QM891G":3,"115RM9L":1,"32Q3K":1,"32S350F":22,"32S350G":1,"40S350G":6,"43F7D":1,"43S551G":7,"43S571G":8,"50F7D":2,"50F8D":2,"50G31":1,"50S551F":2,"50S55LR":1,"55A300W":7,"55A303W":4,"55F7D":2,"55F8D":2,"55Q51K":15,"55Q6LR":2,"55QM52LR":1,"55QM64L":15,"55QM7L":7,"55T7":3,"65A300 PRO":5,"65A303W":1,"65F7D":2,"65Q51K":42,"65Q651F":3,"65QM52LR":1,"65QM64L":8,"65QM7L":6,"65QM8L":24,"65QM9K":7,"65T7":6,"75A300 PRO":5,"75A300W":4,"75A303W":5,"75F35":1,"75F8D":2,"75Q51K":32,"75Q650G":1,"75Q6LR":2,"75QM52LR":5,"75QM64L":10,"75QM7L":13,"75QM8L":3,"75S571G":5,"75T7":3,"85A300W":3,"85F7D":2,"85F8D":2,"85Q651G":12,"85QM5K":1,"85QM64L":4,"85QM8L":5,"85RM9L":2,"85T7":6,"85X11K":10,"98F8D":2,"98Q55K":5,"98Q671G":0,"98Q77K":3,"98QM64L":4,"98QM8L":12,"98RM9L":2,"98S550G":0,"98X11K":4};
+      var INV_CA_BY_CODE = {"32Q31K":[3,0],"32S350R":[0,12],"32S356":[0,4],"32S359":[0,1],"40Q31K":[4,0],"40S350R":[1,0],"43G651G":[1,0],"43Q51K":[1,0],"43S434":[0,1],"43S45":[0,1],"43S450G":[0,3],"43S450R":[6,1],"50S446":[0,6],"50S450R":[0,18],"55A300W":[1,0],"55Q550G":[0,7],"55Q650G":[0,15],"55Q651G":[1,0],"55Q750G":[0,18],"55QM751G":[2,0],"55S535":[0,1],"58S450R":[0,5],"75Q51K":[6,0],"75Q750G":[0,1],"75R635":[0,3],"75S533":[0,1],"85Q51K":[5,0],"98Q79K":[2,0],"98S550G":[0,1]};
       function qtyFor(code) { return QTY_BY_CODE[code]; }
       function qtyHtml(code) { var q = qtyFor(code); return q === undefined ? "" : '<span class="qty-indicator">QTY ' + q + '</span>'; }
       /* OS swap disclaimer, Nov 4, 2026, per Daniel: all OS swaps, not just Fire, are not proactively offered. Offer only if the customer requested this platform, or if the Warranty Team approves it internally. Fire OS gets the extra sentence from the Drop Shipping reference. */
@@ -625,6 +650,26 @@
         var txt = '<div class="os-flag"><strong>OS swap disclaimer:</strong> Do not offer this platform change proactively. Offer only if the customer requested this platform, or if the Warranty Team approves it internally.';
         if (toOs === "fire") txt += ' Fire OS is not offered for an OS swap except as an approved exception.';
         return txt + '</div>';
+      }
+      function invLookup(raw) {
+        var code = (raw || "").toUpperCase().replace(/\s+/g, "");
+        var caKey = code.replace(/-CA$/, "");
+        var ca = INV_CA_BY_CODE[caKey] || [0, 0];
+        var us = QTY_BY_CODE[code];
+        if (us === undefined) us = QTY_BY_CODE[caKey];
+        if (us === undefined) us = 0;
+        return { code: code, us: us, caA: ca[0], caB: ca[1] };
+      }
+      function invCheck() {
+        var el = document.getElementById("invSearch");
+        var out = document.getElementById("invResult");
+        if (!el || !out) return;
+        var r = invLookup(el.value);
+        if (!r.code) { out.innerHTML = '<p>Type a model number above.</p>'; return; }
+        out.innerHTML = '<p><strong>' + esc(r.code) + '</strong></p>' +
+          '<p>USA: A stock ' + r.us + '</p>' +
+          '<p>Canada: A stock ' + r.caA + ', B stock ' + r.caB + '</p>' +
+          '<p class="sub">Inventory as of ' + INV_UPDATED + '. A model not in the file shows 0.</p>';
       }
 
       var FAMILIES = [
@@ -1578,6 +1623,8 @@
         excludeEl.focus();
       }
       document.getElementById("excludeAdd").addEventListener("click", addFromExcludeInput);
+      document.getElementById("invCheck").addEventListener("click", invCheck);
+      document.getElementById("invSearch").addEventListener("keydown", function (e) { if (e.key === "Enter") invCheck(); });
       excludeEl.addEventListener("keydown", function (e) {
         if (e.key === "Enter") { e.preventDefault(); addFromExcludeInput(); }
       });

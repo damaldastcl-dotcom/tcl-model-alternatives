@@ -30,6 +30,14 @@ a separate line directly under the table.
   wherever a model with a known quantity is listed: comparison headers,
   the 4th pick line, the customer-model summary, main pick cards,
   step-up, size-up, downgrade, Holiday options, and left search chips.
-  The quantity table is empty in this publish, per Daniel on Nov 4,
-  2026: publish without the example quantities. No pill shows until
-  a real quantity is added. Never a guessed quantity.
+  Quantities are real ASP data, never guessed. Current source: ASP
+  Inventory Report, November 2, 2026. USA QTY is A stock from ITI FG
+  Inventory, TV category only, 69 models. A model in that tab with
+  A stock 0 shows QTY 0. A model not in that tab shows no QTY pill.
+- Inventory section: Section 3 on the picker page. Type a model number
+  to see USA A stock, and Canada A stock and B stock separately from
+  Canada FG, TV category only, 29 models. A model not in the file
+  shows 0 in this section. The top notice states the inventory date.
+  Daily check: weekdays at 9:30am Pacific, silent on days with no new
+  ASP file. New files replace the prior day data and are published
+  to GitHub as soon as ready.

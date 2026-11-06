@@ -25,6 +25,11 @@ a separate line directly under the table.
   only rows that differ between those picks shown. Each column header
   shows the pick tag and the model year.
 - OS swap disclaimer: every different OS pick carries a disclaimer on its card and in the copy list. Do not offer a platform change proactively. Offer only if the customer requested that platform, or if the Warranty Team approves it internally. Fire OS gets an extra sentence: Fire OS is not offered for an OS swap except as an approved exception. Fire picks stay visible, they are not removed.
+- Comparison links: model names in the side-by-side comparison table and
+  on main pick cards link to the real TCL product page for that exact
+  size, using the per-size variant. Models without a verified TCL link
+  stay plain text. Currently linked: QM8K, QM9K, QM8L (65, 75, 85, and
+  98 inch). A monthly check maps more models.
 - Quantity indicators: a blue QTY pill sits above the model number
   wherever a model with a known quantity is listed: comparison headers,
   the 4th pick line, the customer-model summary, main pick cards,

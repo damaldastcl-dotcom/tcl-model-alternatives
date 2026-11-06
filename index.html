@@ -348,6 +348,9 @@
       .compare-table th:last-child, .compare-table td:last-child { padding-right: 0; }
       .compare-table thead th { border-bottom: 1px solid var(--line); padding-bottom: 10px; font-size: 15px; font-weight: 800; color: var(--ink); }
       .compare-table thead .col-code { font-size: 15px; font-weight: 800; color: var(--ink); overflow-wrap: anywhere; }
+      .model-link { color: inherit; text-decoration: underline; text-underline-offset: 3px; }
+      .model-link:hover { text-decoration-thickness: 2px; }
+      .model-link::after { content: " \2197"; font-size: 0.8em; }
       .compare-table tbody th[scope="row"] { font-weight: 400; color: var(--ink-2); font-size: 14.5px; }
       .compare-table tbody td { color: var(--ink); }
       .compare-table tbody td.alt-cell { color: var(--ink); }
@@ -618,9 +621,11 @@
       /* ASP inventory, November 5, 2026 report. USA A stock from ITI FG Inventory, TV category only. Canada A and B from Canada FG, TV category only, keyed by model without the -CA suffix. A model not in a tab shows 0 in the inventory section. */
       var INV_UPDATED = "November 5, 2026 at 9:54am PST";
       var QTY_BY_CODE = {"115QM7K":2,"115QM891G":3,"115RM9L":1,"32Q3K":1,"32S350F":22,"32S350G":1,"40S350G":6,"43S551G":7,"43S571G":8,"50F7D":2,"50F8D":2,"50G31":1,"50S551F":2,"50S55LR":1,"55A300W":7,"55A303W":4,"55F7D":2,"55F8D":2,"55Q51K":15,"55Q6LR":2,"55QM52LR":1,"55QM64L":15,"55QM7L":3,"55T7":3,"65A300 PRO":5,"65A300L":2,"65A303W":1,"65A3G":5,"65F7D":2,"65M8LF":2,"65Q51K":41,"65Q651F":3,"65Q6LR":2,"65QM52LR":1,"65QM64L":8,"65QM7L":6,"65QM8L":20,"65QM9K":7,"65R7D":2,"65S4CF":2,"65S55LR":2,"65T7":6,"75A300 PRO":5,"75A300W":4,"75A303W":5,"75A400U":2,"75F35":1,"75F8D":2,"75M7L":2,"75M8LF":2,"75Q51K":32,"75Q6LR":2,"75QM52LR":5,"75QM5K":16,"75QM64L":10,"75QM6K":20,"75QM7L":10,"75QM8L":2,"75S55LR":2,"75S571G":4,"75T7":3,"75X11L":2,"85A300W":1,"85A400U":2,"85F7D":2,"85F8D":2,"85M8LF":2,"85Q5K":5,"85Q651G":9,"85QM63K":2,"85QM64L":4,"85QM7L":5,"85QM8L":8,"85RM9L":2,"85S4CF":2,"85S55LR":2,"85T7":6,"85X11K":10,"98F8D":2,"98Q55K":4,"98Q651G":2,"98Q671G":4,"98Q77K":3,"98QM64L":4,"98QM6K":8,"98QM8L":11,"98RM9L":2,"98S550G":0,"98X11K":4};
+      var MODEL_URLS = {"65QM8K":"https://us.tcl.com/products/qm8k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054401646657","75QM8K":"https://us.tcl.com/products/qm8k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054401679425","85QM8K":"https://us.tcl.com/products/qm8k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054401712193","98QM8K":"https://us.tcl.com/products/qm8k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054401744961","65QM9K":"https://us.tcl.com/products/qm9k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054403416129","75QM9K":"https://us.tcl.com/products/qm9k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054403448897","85QM9K":"https://us.tcl.com/products/qm9k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054403481665","98QM9K":"https://us.tcl.com/products/qm9k-series-qd-mini-led-qled-4k-uhd-smart-tv-with-google-tv?variant=44054403514433","65QM8L":"https://us.tcl.com/products/qm8l-series-sqd-mini-led-4k-uhd-hdr-smart-tv-with-google-tv?variant=44054424027201","75QM8L":"https://us.tcl.com/products/qm8l-series-sqd-mini-led-4k-uhd-hdr-smart-tv-with-google-tv?variant=44054424059969","85QM8L":"https://us.tcl.com/products/qm8l-series-sqd-mini-led-4k-uhd-hdr-smart-tv-with-google-tv?variant=44054424092737","98QM8L":"https://us.tcl.com/products/qm8l-series-sqd-mini-led-4k-uhd-hdr-smart-tv-with-google-tv?variant=44054424125505"};
       var INV_CA_BY_CODE = {"32Q31K":[3,0],"32S350R":[0,12],"32S356":[0,4],"32S359":[0,1],"40Q31K":[4,0],"40S350R":[1,0],"43G651G":[1,0],"43S434":[0,1],"43S45":[0,1],"43S450G":[0,3],"43S450R":[6,1],"50S446":[0,6],"50S450R":[0,18],"55A300W":[1,0],"55Q550G":[0,6],"55Q650G":[0,15],"55Q651G":[1,0],"55Q750G":[0,18],"55QM751G":[2,0],"55S535":[0,1],"58S450R":[0,5],"75Q51K":[6,0],"75Q750G":[0,1],"75R635":[0,3],"75S533":[0,1],"85Q51K":[5,0],"98Q79K":[2,0],"98S550G":[0,1]};
       function qtyFor(code) { return QTY_BY_CODE[code]; }
       function qtyHtml(code) { var q = qtyFor(code); return q === undefined ? "" : '<span class="qty-indicator">QTY ' + q + '</span>'; }
+      function modelLinkHtml(code) { var u = MODEL_URLS[code]; return u ? '<a class="model-link" href="' + esc(u) + '" target="_blank" rel="noopener">' + esc(code) + '</a>' : esc(code); }
       /* OS swap disclaimer, Nov 4, 2026, per Daniel: all OS swaps, not just Fire, are not proactively offered. Offer only if the customer requested this platform, or if the Warranty Team approves it internally. Fire OS gets the extra sentence from the Drop Shipping reference. */
       function osSwapFlag(fromOs, toOs) {
         var txt = '<div class="os-flag"><strong>OS swap disclaimer:</strong> Do not offer this platform change proactively. Offer only if the customer requested this platform, or if the Warranty Team approves it internally.';
@@ -1795,7 +1800,7 @@
         }
         var cols = '<col class="col-feature">' + colPicks.map(function () { return '<col class="col-model">'; }).join('');
         var head = colPicks.map(function (p) {
-          return '<th scope="col">' + qtyHtml(p.model.code) + '<span class="col-code">' + esc(p.model.code) + '</span>' + compareIndicatorHtml(p) + '</th>';
+          return '<th scope="col">' + qtyHtml(p.model.code) + '<span class="col-code">' + modelLinkHtml(p.model.code) + '</span>' + compareIndicatorHtml(p) + '</th>';
         }).join('');
         var body = '<table class="compare-table"><colgroup>' + cols + '</colgroup>' +
           '<thead><tr><th scope="col">Feature</th>' + head + '</tr></thead>' +
@@ -1866,7 +1871,7 @@
               '<div class="rank" aria-hidden="true">' + (i + 1) + '</div>' +
               '<div class="pick-main">' +
                 (qtyFor(p.model.code) !== undefined ? '<div>' + qtyHtml(p.model.code) + '</div>' : '') +
-                '<div class="pick-top"><span class="pick-code mono">' + p.model.code + '</span>' +
+                '<div class="pick-top"><span class="pick-code mono">' + modelLinkHtml(p.model.code) + '</span>' +
                 '<span class="tag ' + p.tagClass + '">' + p.tag + '</span>' +
                 '<span class="pick-year">' + (p.model.gen.year ? p.model.gen.year + ' model year' : 'Bulk pack') + '</span>' +
                 '<span class="compare-state">' + (isCmp ? "In comparison" : (isFourth ? "4th pick" : "")) + '</span></div>' +

@@ -35,7 +35,7 @@ a separate line directly under the table.
   the 4th pick line, the customer-model summary, main pick cards,
   step-up, size-up, downgrade, and left search chips.
   Quantities are real ASP data, never guessed. Current source: ASP
-  Inventory Report, November 12, 2026. USA QTY is A stock from ITI FG
+  Inventory Report, November 13, 2026. USA QTY is A stock from ITI FG
   Inventory, TV category only, 117 models. A model in that tab with
   A stock 0 shows QTY 0. A model not in that tab shows no QTY pill.
 - Inventory section: Section 3 on the picker page. Type a model number
